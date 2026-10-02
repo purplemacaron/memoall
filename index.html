@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemoAll</title>
+<style>
+:root{
+  --bg:#fff;--side:#fafafa;--text:#1f2328;--muted:#8b8f96;--line:#ececee;--hover:#f3f4f6;
+  --accent:#2563eb;--accent-soft:#eef3ff;--code:#f6f7f9;
+  --sans:"Pretendard",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"D2Coding",Consolas,"SF Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--text);display:flex;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#e2e3e7;border-radius:10px;border:3px solid transparent;background-clip:content-box}
+
+/* ---------- 사이드바 ---------- */
+#sidebar{width:272px;min-width:272px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 14px}
+.logo{width:28px;height:28px;border-radius:8px;background:var(--text);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.brand b{font-size:17px;letter-spacing:-.3px}
+#count{margin-left:auto;font-size:12px;color:var(--muted)}
+.side-top{padding:0 12px 8px;display:flex;flex-direction:column;gap:8px}
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:6px;height:36px;border:none;border-radius:9px;background:var(--text);color:#fff;font-weight:600}
+.btn-primary:hover{background:#000}
+.btn-primary svg{width:16px;height:16px}
+.search{position:relative}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted)}
+.search input{width:100%;height:34px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:0 10px 0 32px;outline:none}
+.search input:focus{border-color:#cfd3da;box-shadow:0 0 0 3px #f1f2f4}
+.seg{display:flex;background:#efeff1;border-radius:9px;padding:3px;gap:2px}
+.seg button{flex:1;border:none;background:transparent;border-radius:7px;padding:5px 10px;font-size:13px;color:var(--muted);white-space:nowrap}
+.seg button.on{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:600}
+.sort-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);padding:2px 4px}
+.sort-row select{border:none;background:transparent;font-size:12px;color:var(--muted);outline:none;cursor:pointer}
+.link-btn{border:none;background:none;color:#dc2626;font-size:12px;padding:0}
+#list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.item{padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px;border:1px solid transparent}
+.item:hover{background:#f1f1f3}
+.item.active{background:#fff;border-color:var(--line);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.it-title{display:flex;align-items:center;gap:6px;font-weight:600}
+.it-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it-title svg{width:13px;height:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.it-prev{font-size:13px;color:#6b7078;margin:3px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it-meta{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty-list{padding:40px 10px;text-align:center;color:var(--muted);font-size:13px}
+.side-foot{border-top:1px solid var(--line);padding:8px;display:flex;gap:2px}
+.side-foot button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:transparent;border-radius:8px;padding:7px 4px;font-size:11.5px;color:#6b7078}
+.side-foot button:hover{background:#efeff1;color:var(--text)}
+.side-foot svg{width:16px;height:16px}
+
+/* ---------- 메인 / 툴바 ---------- */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:8px 12px;border-bottom:1px solid var(--line);min-height:52px}
+.ib{width:32px;height:32px;border:none;background:transparent;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#5f6368}
+.ib:hover{background:var(--hover);color:var(--text)}
+.ib.on{background:var(--accent-soft);color:var(--accent)}
+.ib.danger:hover{background:#fef2f2;color:#dc2626}
+.sep{width:1px;height:18px;background:var(--line);margin:0 6px}
+.spacer{flex:1}
+#toolbar .seg{padding:2px;margin-right:4px}
+#toolbar .seg button{padding:4px 12px}
+#menuBtn{display:none}
+
+.dd{position:relative}
+.menu{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);padding:6px;z-index:30}
+.menu.right{left:auto;right:0}
+.dd.open .menu{display:block}
+.menu button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:none;background:transparent;padding:7px 10px;border-radius:7px;font-size:13px;text-align:left}
+.menu button:hover{background:var(--hover)}
+.menu button.sel::after{content:"✓";color:var(--accent);font-weight:700}
+.mlabel{font-size:11px;color:var(--muted);padding:8px 10px 4px;font-weight:600}
+.mdiv{height:1px;background:var(--line);margin:5px 4px}
+.size-row{display:flex;align-items:center;justify-content:space-between;padding:2px 4px}
+.size-row button{width:32px;justify-content:center;padding:4px;font-size:16px}
+.kbd{font-size:11px;color:var(--muted)}
+
+/* ---------- 문서 ---------- */
+#doc{flex:1;display:flex;flex-direction:column;min-height:0}
+#head{width:100%;max-width:824px;margin:0 auto;padding:36px 32px 0}
+#title{width:100%;border:none;outline:none;font-size:30px;font-weight:700;letter-spacing:-.5px;padding:0;background:transparent}
+#title::placeholder,#editor::placeholder{color:#c4c7cc}
+.meta-row{display:flex;align-items:center;gap:12px;margin-top:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.tag-wrap{flex:1;display:flex;align-items:center;gap:6px;color:var(--muted)}
+.tag-wrap svg{width:15px;height:15px}
+#tags{flex:1;border:none;outline:none;font-size:13px;background:transparent;color:#555}
+.colors{display:flex;gap:7px}
+.colors span{width:14px;height:14px;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .1s}
+.colors span:hover{transform:scale(1.2)}
+.colors span.sel{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--text)}
+.colors span.none{background:#fff linear-gradient(45deg,transparent 44%,#d0d3d8 44%,#d0d3d8 56%,transparent 56%)}
+#workspace{flex:1;display:flex;min-height:0}
+#editor,#preview{flex:1;min-width:0;height:100%;overflow:auto;padding:20px max(32px,calc((100% - 760px)/2)) 120px;line-height:1.8}
+#editor{border:none;outline:none;resize:none;background:transparent;color:var(--text);tab-size:4}
+#editor.nowrap{white-space:pre;overflow-x:auto}
+#preview{display:none}
+.mode-split #preview,.mode-preview #preview{display:block}
+.mode-preview #editor{display:none}
+.mode-split #editor,.mode-split #preview{padding:20px 32px 120px}
+.mode-split #preview{border-left:1px solid var(--line);background:#fcfcfd}
+#preview>:first-child{margin-top:0}
+#preview h1,#preview h2,#preview h3{letter-spacing:-.3px;line-height:1.35;margin:1.4em 0 .5em}
+#preview h1{font-size:1.75em}
+#preview h2{font-size:1.4em;padding-bottom:.3em;border-bottom:1px solid var(--line)}
+#preview h3{font-size:1.2em}
+#preview p{margin:.5em 0}
+#preview pre{background:var(--code);border:1px solid var(--line);padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:.9em}
+#preview code{font-family:var(--mono);background:var(--code);padding:2px 6px;border-radius:5px;font-size:.88em}
+#preview pre code{background:none;padding:0}
+#preview blockquote{margin:.8em 0;padding:2px 16px;border-left:3px solid #d5d8dd;color:#666}
+#preview hr{border:none;border-top:1px solid var(--line);margin:1.5em 0}
+#preview a{color:var(--accent);text-decoration:none;border-bottom:1px solid #bfd0fb}
+#preview ul,#preview ol{padding-left:1.4em}
+#preview li.task{list-style:none;margin-left:-1.4em}
+#preview input[type=checkbox]{accent-color:var(--accent);margin-right:6px}
+#empty{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+#empty .btn-primary{padding:0 18px}
+
+/* ---------- 상태바 ---------- */
+#statusbar{display:flex;gap:16px;padding:0 16px;height:30px;align-items:center;font-size:12px;color:var(--muted);border-top:1px solid var(--line);white-space:nowrap;overflow:hidden}
+#status{margin-left:auto;display:flex;align-items:center;gap:6px}
+#status::before{content:"";width:6px;height:6px;border-radius:50%;background:#22c55e}
+#status.typing::before{background:#f59e0b}
+#status.err::before{background:#ef4444}
+
+/* ---------- 찾기 ---------- */
+#findbar{display:none;position:absolute;top:60px;right:16px;z-index:25;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:8px;width:380px;flex-direction:column;gap:6px}
+#findbar.show{display:flex}
+.frow{display:flex;gap:4px;align-items:center}
+.frow input[type=text]{flex:1;min-width:0;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;outline:none;font-size:13px}
+.frow input[type=text]:focus{border-color:#cfd3da;box-shadow:0 0 0 3px #f1f2f4}
+#findInfo{font-size:12px;color:var(--muted);min-width:46px;text-align:center}
+.tbtn{height:32px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:0 10px;font-size:12.5px;white-space:nowrap}
+.tbtn:hover{background:var(--hover)}
+.fopt{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;padding:2px 4px}
+.fopt input{accent-color:var(--accent)}
+
+body.focus #sidebar,body.focus #toolbar,body.focus #statusbar{display:none}
+body.focus #head{padding-top:64px}
+
+#toast{position:fixed;bottom:48px;left:50%;transform:translate(-50%,8px);background:#1f2328;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media print{
+  #sidebar,#toolbar,#findbar,#statusbar,.meta-row,#editor{display:none!important}
+  body{display:block;overflow:visible}
+  #head{padding:0}
+  #preview{display:block!important;padding:16px 0!important;overflow:visible;height:auto;border:none!important;background:#fff!important}
+}
+@media (max-width:800px){
+  #sidebar{position:fixed;z-index:40;height:100%;transform:translateX(-100%);transition:transform .2s;box-shadow:4px 0 20px rgba(0,0,0,.06)}
+  body.side #sidebar{transform:none}
+  #menuBtn{display:inline-flex}
+  #head{padding:24px 20px 0}
+  #editor,#preview{padding:16px 20px 100px}
+  #findbar{left:12px;right:12px;width:auto}
+}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="brand"><div class="logo">M</div><b>MemoAll</b><span id="count"></span></div>
+  <div class="side-top">
+    <button class="btn-primary" id="newBtn" data-i="plus" title="새 메모 (Alt+N)">새 메모</button>
+    <div class="search" data-i="search"><input type="search" id="search" placeholder="검색"></div>
+    <div class="seg" id="viewSeg">
+      <button data-view="all" class="on">전체</button>
+      <button data-view="pinned">고정</button>
+      <button data-view="trash">휴지통</button>
+    </div>
+    <div class="sort-row">
+      <select id="sort">
+        <option value="updated">최근 수정순</option>
+        <option value="created">생성일순</option>
+        <option value="title">제목순</option>
+      </select>
+      <button class="link-btn" id="emptyTrashBtn" style="display:none">휴지통 비우기</button>
+    </div>
+  </div>
+  <div id="list"></div>
+  <div class="side-foot">
+    <button id="backupBtn" data-i="save">백업</button>
+    <button id="restoreBtn" data-i="restore">복원</button>
+    <button id="openFileBtn" data-i="file">파일 열기</button>
+  </div>
+</aside>
+
+<main id="main">
+  <div id="toolbar">
+    <button class="ib" id="menuBtn" data-i="menu" title="메뉴"></button>
+    <button class="ib" data-i="bold" data-md="bold" title="굵게 (Ctrl+B)"></button>
+    <button class="ib" data-i="italic" data-md="italic" title="기울임 (Ctrl+I)"></button>
+    <button class="ib" data-i="strike" data-md="strike" title="취소선"></button>
+    <button class="ib" data-i="heading" data-md="h" title="제목"></button>
+    <span class="sep"></span>
+    <button class="ib" data-i="ul" data-md="ul" title="글머리 목록"></button>
+    <button class="ib" data-i="ol" data-md="ol" title="번호 목록"></button>
+    <button class="ib" data-i="check" data-md="check" title="체크리스트"></button>
+    <button class="ib" data-i="quote" data-md="quote" title="인용"></button>
+    <button class="ib" data-i="code" data-md="code" title="코드"></button>
+    <button class="ib" data-i="link" data-md="link" title="링크"></button>
+    <button class="ib" data-i="hr" data-md="hr" title="구분선"></button>
+    <span class="sep"></span>
+    <button class="ib" id="dateBtn" data-i="clock" title="날짜·시간 삽입"></button>
+    <div class="dd">
+      <button class="ib" data-i="tools" title="텍스트 도구"></button>
+      <div class="menu">
+        <div class="mlabel">대소문자</div>
+        <button data-tool="upper">대문자로</button>
+        <button data-tool="lower">소문자로</button>
+        <button data-tool="title">단어 첫 글자 대문자</button>
+        <div class="mdiv"></div>
+        <div class="mlabel">줄 정리</div>
+        <button data-tool="sort">오름차순 정렬</button>
+        <button data-tool="sortr">내림차순 정렬</button>
+        <button data-tool="reverse">순서 뒤집기</button>
+        <button data-tool="shuffle">무작위 섞기</button>
+        <button data-tool="dedupe">중복 줄 제거</button>
+        <button data-tool="blank">빈 줄 제거</button>
+        <button data-tool="trim">앞뒤 공백 제거</button>
+        <button data-tool="number">줄 번호 붙이기</button>
+      </div>
+    </div>
+    <button class="ib" id="findBtn" data-i="find" title="찾기·바꾸기 (Ctrl+F)"></button>
+
+    <span class="spacer"></span>
+
+    <div class="seg" id="modeSeg">
+      <button data-mode="edit">편집</button>
+      <button data-mode="split">분할</button>
+      <button data-mode="preview">보기</button>
+    </div>
+    <button class="ib" id="speakBtn" data-i="volume" title="소리내어 읽기"></button>
+    <div class="dd">
+      <button class="ib" data-i="download" title="내보내기"></button>
+      <div class="menu right">
+        <button data-export="copy">전체 복사</button>
+        <div class="mdiv"></div>
+        <button data-export="txt">텍스트 (.txt)</button>
+        <button data-export="md">마크다운 (.md)</button>
+        <button data-export="html">웹 문서 (.html)</button>
+        <div class="mdiv"></div>
+        <button data-export="print">인쇄 / PDF 저장</button>
+      </div>
+    </div>
+    <div class="dd">
+      <button class="ib" data-i="type" title="보기 설정"></button>
+      <div class="menu right">
+        <div class="mlabel">글꼴</div>
+        <button data-font="sans">고딕</button>
+        <button data-font="serif">명조</button>
+        <button data-font="mono">고정폭</button>
+        <div class="mdiv"></div>
+        <div class="mlabel">글자 크기</div>
+        <div class="size-row"><button id="sizeDown">−</button><span id="sizeVal"></span><button id="sizeUp">+</button></div>
+        <div class="mdiv"></div>
+        <button id="wrapBtn">자동 줄바꿈</button>
+      </div>
+    </div>
+    <button class="ib" id="focusBtn" data-i="focus" title="집중 모드 (Ctrl+Shift+F)"></button>
+    <span class="sep"></span>
+    <button class="ib" id="pinBtn" data-i="pin" title="고정"></button>
+    <button class="ib" id="dupBtn" data-i="dup" title="복제"></button>
+    <button class="ib" id="restoreNoteBtn" data-i="restore" title="복원" style="display:none"></button>
+    <button class="ib danger" id="delBtn" data-i="trash" title="삭제"></button>
+  </div>
+
+  <div id="findbar">
+    <div class="frow">
+      <input type="text" id="findInput" placeholder="찾기">
+      <span id="findInfo"></span>
+      <button class="ib" id="findPrev" data-i="up" title="이전 (Shift+Enter)"></button>
+      <button class="ib" id="findNext" data-i="down" title="다음 (Enter)"></button>
+      <button class="ib" id="findClose" data-i="x" title="닫기 (Esc)"></button>
+    </div>
+    <div class="frow">
+      <input type="text" id="replaceInput" placeholder="바꾸기">
+      <button class="tbtn" id="replaceOne">바꾸기</button>
+      <button class="tbtn" id="replaceAll">모두</button>
+    </div>
+    <label class="fopt"><input type="checkbox" id="caseChk"> 대소문자 구분</label>
+  </div>
+
+  <div id="doc">
+    <div id="head">
+      <input type="text" id="title" placeholder="제목 없음">
+      <div class="meta-row">
+        <div class="tag-wrap" data-i="tag"><input type="text" id="tags" placeholder="태그 추가 (쉼표로 구분)"></div>
+        <div class="colors" id="colors"></div>
+      </div>
+    </div>
+    <div id="workspace">
+      <textarea id="editor" spellcheck="false" placeholder="내용을 입력하세요. 마크다운을 지원합니다."></textarea>
+      <div id="preview"></div>
+    </div>
+  </div>
+  <div id="empty">
+    <div>메모를 선택하거나 새로 만들어 보세요.</div>
+    <button class="btn-primary" onclick="newNote()">새 메모</button>
+  </div>
+
+  <div id="statusbar">
+    <span id="stats"></span>
+    <span id="cursorPos"></span>
+    <span id="status">준비됨</span>
+  </div>
+</main>
+
+<input type="file" id="fileInput" accept=".txt,.md,.json,text/*" hidden>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+
+/* ===== 아이콘 ===== */
+const ICONS = {
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  bold:'<path d="M7 4h6a4 4 0 0 1 0 8H7zM7 12h7a4 4 0 0 1 0 8H7z"/>',
+  italic:'<path d="M19 4h-9M14 20H5M15 4 9 20"/>',
+  strike:'<path d="M16 6a4 3 0 0 0-4-2c-2.5 0-4 1.3-4 3 0 1.2.7 2.2 2 3M14 14c1.3.6 2 1.6 2 3 0 1.8-1.8 3-4 3a4.5 4 0 0 1-4.5-2.5M4 12h16"/>',
+  heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',
+  ul:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="4.5" cy="18" r=".8"/>',
+  ol:'<path d="M10 6h11M10 12h11M10 18h11M4 4h1v5M4 9h2M6 19H4c0-1 2-1.6 2-3 0-.8-1.2-1.4-2-.6"/>',
+  check:'<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12 3 3 5-6"/>',
+  quote:'<path d="M4 18c2.5 0 5-1.5 5-6V6H4v6h5M15 18c2.5 0 5-1.5 5-6V6h-5v6h5"/>',
+  code:'<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  hr:'<path d="M4 12h16"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  tools:'<path d="M14.7 6.3a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3l8.7-8.7a4 4 0 0 0-2-2zM3 3l5 5"/>',
+  find:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/>',
+  volume:'<path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  type:'<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',
+  focus:'<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>',
+  pin:'<path d="M12 17v5M9 3h6l-1 7 4 4H6l4-4z"/>',
+  dup:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+  trash:'<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  restore:'<path d="M3 12a9 9 0 1 0 2.6-6.4L3 8M3 3v5h5"/>',
+  save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>',
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',
+  tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1"/>',
+  up:'<path d="m18 15-6-6-6 6"/>', down:'<path d="m6 9 6 6 6-6"/>', x:'<path d="M18 6 6 18M6 6l12 12"/>'
+};
+const svg = n => `<svg viewBox="0 0 24 24">${ICONS[n]||''}</svg>`;
+
+$$('[data-i]').forEach(el => el.insertAdjacentHTML('afterbegin', svg(el.dataset.i)));
+
+/* ===== 상태 ===== */
+const ed = $('#editor');
+const FONTS = {
+  sans:'"Pretendard",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif',
+  serif:'"Nanum Myeongjo","Noto Serif KR","AppleMyungjo",Batang,serif',
+  mono:'"D2Coding",Consolas,"SF Mono",monospace'
+};
+const COLORS = ['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+const K = 'memoall_';
+let notes = JSON.parse(localStorage.getItem(K+'notes') || localStorage.getItem('sn_notes') || '[]');
+let settings = Object.assign({font:'sans', size:16, sort:'updated', wrap:true, mode:'edit'},
+  JSON.parse(localStorage.getItem(K+'settings') || '{}'));
+if (!FONTS[settings.font]) settings.font = 'sans';
+let currentId = localStorage.getItem(K+'current'), view = 'all', saveTimer, fileMode = '';
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmt = t => new Date(t).toLocaleString('ko-KR', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+const cur = () => notes.find(n => n.id === currentId);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function setStatus(txt, cls=''){ const s=$('#status'); s.textContent=txt; s.className=cls; }
+function saveSettings(){ localStorage.setItem(K+'settings', JSON.stringify(settings)); }
+function save(){
+  try { localStorage.setItem(K+'notes', JSON.stringify(notes)); localStorage.setItem(K+'current', currentId||'');
+        setStatus('저장됨 ' + new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})); }
+  catch(e){ setStatus('저장 실패 · 용량 초과', 'err'); }
+}
+function scheduleSave(){ setStatus('입력 중', 'typing'); clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ save(); renderList(); }, 500); }
+
+/* ===== 메모 관리 ===== */
+function newNote(content='', title=''){
+  const n = {id:uid(), title, content, created:Date.now(), updated:Date.now(), pinned:false, color:'', tags:[], deleted:false};
+  notes.unshift(n); setView('all'); openNote(n.id); save();
+  title ? ed.focus() : $('#title').focus();
+}
+function openNote(id){
+  currentId = id; const n = cur(), has = !!n;
+  $('#doc').style.display = has ? 'flex' : 'none';
+  $('#empty').style.display = has ? 'none' : 'flex';
+  if (has){
+    $('#title').value = n.title; ed.value = n.content; $('#tags').value = n.tags.join(', ');
+    ed.readOnly = $('#title').readOnly = $('#tags').readOnly = n.deleted;
+    $('#pinBtn').classList.toggle('on', n.pinned);
+    $('#restoreNoteBtn').style.display = n.deleted ? '' : 'none';
+    $('#delBtn').title = n.deleted ? '영구 삭제' : '삭제';
+    renderColors(); renderPreview(); updateStats();
+  } else { $('#stats').textContent = ''; $('#cursorPos').textContent = ''; }
+  localStorage.setItem(K+'current', id||''); renderList();
+  document.body.classList.remove('side');
+}
+function touch(){ const n=cur(); if(n){ n.updated=Date.now(); scheduleSave(); } }
+
+function renderList(){
+  const q = $('#search').value.trim().toLowerCase();
+  let list = notes.filter(n => view==='trash' ? n.deleted : view==='pinned' ? n.pinned && !n.deleted : !n.deleted);
+  if (q) list = list.filter(n => (n.title+' '+n.content+' '+n.tags.join(' ')).toLowerCase().includes(q));
+  const s = settings.sort;
+  list.sort((a,b) => (b.pinned-a.pinned) || (s==='title' ? (a.title||'').localeCompare(b.title||'','ko') : s==='created' ? b.created-a.created : b.updated-a.updated));
+  $('#list').innerHTML = list.map(n => `
+    <div class="item ${n.id===currentId?'active':''}" data-id="${n.id}">
+      <div class="it-title">${n.color?`<i class="dot" style="background:${n.color}"></i>`:''}${n.pinned?svg('pin'):''}<span>${esc(n.title||'제목 없음')}</span></div>
+      <div class="it-prev">${esc(n.content.replace(/\s+/g,' ').slice(0,80)) || '내용 없음'}</div>
+      <div class="it-meta">${fmt(n.updated)}${n.tags.length ? ' · ' + n.tags.map(t=>'#'+esc(t)).join(' ') : ''}</div>
+    </div>`).join('') || `<div class="empty-list">${q?'검색 결과가 없습니다':view==='trash'?'휴지통이 비어 있습니다':'메모가 없습니다'}</div>`;
+  $('#count').textContent = notes.filter(n=>!n.deleted).length + '개';
+  $('#emptyTrashBtn').style.display = view==='trash' && notes.some(n=>n.deleted) ? '' : 'none';
+}
+function setView(v){ view=v; $$('#viewSeg button').forEach(b=>b.classList.toggle('on', b.dataset.view===v)); renderList(); }
+function renderColors(){
+  const n=cur(); $('#colors').innerHTML = COLORS.map(c =>
+    `<span data-c="${c}" class="${c?'':'none'} ${n&&n.color===c?'sel':''}" title="${c?'색상 라벨':'라벨 없음'}" style="${c?'background:'+c:''}"></span>`).join('');
+}
+
+/* ===== 마크다운 ===== */
+function md(src){
+  const blocks=[];
+  src = src.replace(/```[^\n]*\n([\s\S]*?)```/g, (m,c) => { blocks.push('<pre><code>'+esc(c)+'</code></pre>'); return '\u0001'+(blocks.length-1)+'\u0001'; });
+  const inline = t => t.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+    .replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/~~(.+?)~~/g,'<s>$1</s>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  let out=[], list=null;
+  const close = () => { if(list){ out.push(`</${list}>`); list=null; } };
+  const open = t => { if(list!==t){ close(); out.push(`<${t}>`); list=t; } };
+  for (const line of esc(src).split('\n')){
+    let m;
+    if ((m=line.match(/^\u0001(\d+)\u0001$/))){ close(); out.push(blocks[m[1]]); }
+    else if ((m=line.match(/^(#{1,6}) (.*)/))){ close(); out.push(`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`); }
+    else if (/^(-{3,}|\*{3,})$/.test(line.trim())){ close(); out.push('<hr>'); }
+    else if ((m=line.match(/^&gt; ?(.*)/))){ close(); out.push(`<blockquote>${inline(m[1])}</blockquote>`); }
+    else if ((m=line.match(/^\s*[-*] \[( |x)\] (.*)/i))){ open('ul'); out.push(`<li class="task"><input type="checkbox" disabled ${m[1]!==' '?'checked':''}>${inline(m[2])}</li>`); }
+    else if ((m=line.match(/^\s*[-*] (.*)/))){ open('ul'); out.push(`<li>${inline(m[1])}</li>`); }
+    else if ((m=line.match(/^\s*\d+\. (.*)/))){ open('ol'); out.push(`<li>${inline(m[1])}</li>`); }
+    else if (!line.trim()){ close(); }
+    else { close(); out.push(`<p>${inline(line)}</p>`); }
+  }
+  close(); return out.join('\n');
+}
+function renderPreview(){ if(settings.mode!=='edit') $('#preview').innerHTML = md(ed.value); }
+
+/* ===== 통계 ===== */
+function updateStats(){
+  const t = ed.value, noSpace = t.replace(/\s/g,'').length;
+  const words = (t.match(/\S+/g)||[]).length, lines = t ? t.split('\n').length : 0;
+  const sel = ed.selectionEnd - ed.selectionStart;
+  $('#stats').textContent = `${t.length.toLocaleString()}자 (공백 제외 ${noSpace.toLocaleString()}) · ${words}단어 · ${lines}줄 · 약 ${Math.max(1,Math.ceil(noSpace/500))}분` + (sel?` · ${sel}자 선택`:'');
+  const before = t.slice(0, ed.selectionStart).split('\n');
+  $('#cursorPos').textContent = `줄 ${before.length}, 칸 ${before[before.length-1].length+1}`;
+}
+
+/* ===== 편집 도우미 ===== */
+function insertText(text){
+  if (ed.readOnly || !cur()) return;
+  ed.focus();
+  if (!document.execCommand('insertText', false, text)) ed.setRangeText(text, ed.selectionStart, ed.selectionEnd, 'end');
+  onEdit();
+}
+function wrapSel(before, after=before, ph='텍스트'){
+  const s=ed.selectionStart, e=ed.selectionEnd, sel=ed.value.slice(s,e)||ph;
+  insertText(before+sel+after); ed.setSelectionRange(s+before.length, s+before.length+sel.length);
+}
+function prefixLine(p){ const ls=ed.value.lastIndexOf('\n', ed.selectionStart-1)+1; ed.focus(); ed.setSelectionRange(ls, ls); insertText(p); }
+function onEdit(){ const n=cur(); if(!n) return; n.content=ed.value; touch(); updateStats(); renderPreview(); }
+
+const mdActions = {
+  bold:()=>wrapSel('**'), italic:()=>wrapSel('*'), strike:()=>wrapSel('~~'),
+  code:()=> ed.value.slice(ed.selectionStart,ed.selectionEnd).includes('\n') ? wrapSel('```\n','\n```','코드') : wrapSel('`','`','코드'),
+  link:()=>{ const url=prompt('링크 주소(URL)','https://'); if(url) wrapSel('[', `](${url})`, '링크 텍스트'); },
+  h:()=>prefixLine('## '), ul:()=>prefixLine('- '), ol:()=>prefixLine('1. '), check:()=>prefixLine('- [ ] '),
+  quote:()=>prefixLine('> '), hr:()=>insertText('\n---\n')
+};
+const textTools = {
+  upper:t=>t.toUpperCase(), lower:t=>t.toLowerCase(), title:t=>t.replace(/\b\w/g,c=>c.toUpperCase()),
+  sort:t=>t.split('\n').sort((a,b)=>a.localeCompare(b,'ko')).join('\n'),
+  sortr:t=>t.split('\n').sort((a,b)=>b.localeCompare(a,'ko')).join('\n'),
+  reverse:t=>t.split('\n').reverse().join('\n'),
+  dedupe:t=>[...new Set(t.split('\n'))].join('\n'),
+  trim:t=>t.split('\n').map(l=>l.trim()).join('\n'),
+  blank:t=>t.split('\n').filter(l=>l.trim()).join('\n'),
+  number:t=>t.split('\n').map((l,i)=>`${i+1}. ${l}`).join('\n'),
+  shuffle:t=>{ const a=t.split('\n'); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a.join('\n'); }
+};
+
+/* ===== 찾기 / 바꾸기 ===== */
+function findAll(){
+  const q=$('#findInput').value; if(!q) return [];
+  const cs=$('#caseChk').checked, text=cs?ed.value:ed.value.toLowerCase(), needle=cs?q:q.toLowerCase();
+  const res=[]; let i=0; while((i=text.indexOf(needle,i))!==-1){ res.push(i); i+=needle.length; } return res;
+}
+function find(dir=1){
+  const q=$('#findInput').value, hits=findAll();
+  if(!hits.length){ $('#findInfo').textContent = q?'없음':''; return; }
+  let idx = dir>0 ? hits.findIndex(h=>h>=ed.selectionEnd) : hits.map(h=>h<ed.selectionStart).lastIndexOf(true);
+  if(idx<0) idx = dir>0 ? 0 : hits.length-1;
+  ed.focus(); ed.setSelectionRange(hits[idx], hits[idx]+q.length);
+  ed.scrollTop = (ed.value.slice(0,hits[idx]).split('\n').length-4) * parseFloat(getComputedStyle(ed).lineHeight);
+  $('#findInfo').textContent = `${idx+1}/${hits.length}`;
+}
+function replaceOne(){
+  const q=$('#findInput').value, sel=ed.value.slice(ed.selectionStart,ed.selectionEnd);
+  if(q && ($('#caseChk').checked ? sel===q : sel.toLowerCase()===q.toLowerCase())) insertText($('#replaceInput').value);
+  find(1);
+}
+function replaceAll(){
+  const q=$('#findInput').value; if(!q) return;
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), $('#caseChk').checked?'g':'gi');
+  const count=(ed.value.match(re)||[]).length; if(!count) return toast('찾는 내용이 없습니다');
+  const r=$('#replaceInput').value; ed.focus(); ed.select(); insertText(ed.value.replace(re, ()=>r));
+  toast(`${count}개를 바꿨습니다`);
+}
+function toggleFind(show){
+  $('#findbar').classList.toggle('show', show); $('#findBtn').classList.toggle('on', show);
+  if(show){ const s=ed.value.slice(ed.selectionStart,ed.selectionEnd); if(s&&!s.includes('\n')) $('#findInput').value=s; $('#findInput').select(); }
+}
+
+/* ===== 파일 ===== */
+function download(name, content, type='text/plain'){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:type+';charset=utf-8'}));
+  a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+const safeName = () => ((cur()?.title)||'메모').replace(/[\\/:*?"<>|]/g,'_');
+function handleFile(f, mode){
+  if(!f) return; const r=new FileReader();
+  r.onload = () => {
+    if(mode==='backup'){
+      try { const data=JSON.parse(r.result); if(!Array.isArray(data)) throw 0;
+        const ids=new Set(notes.map(n=>n.id)); let added=0;
+        data.forEach(n=>{ if(n.id && !ids.has(n.id)){ notes.push(Object.assign({title:'',content:'',tags:[],color:'',pinned:false,deleted:false,created:Date.now(),updated:Date.now()},n)); added++; } });
+        save(); renderList(); toast(`${added}개 메모를 복원했습니다`);
+      } catch { alert('올바른 MemoAll 백업 파일이 아닙니다.'); }
+    } else newNote(r.result, f.name.replace(/\.[^.]+$/,''));
+  };
+  r.readAsText(f);
+}
+
+/* ===== 설정 ===== */
+function applySettings(){
+  ed.style.fontFamily = $('#preview').style.fontFamily = FONTS[settings.font];
+  ed.style.fontSize = $('#preview').style.fontSize = settings.size+'px';
+  $('#sizeVal').textContent = settings.size+'px';
+
+  $$('[data-font]').forEach(b=>b.classList.toggle('sel', b.dataset.font===settings.font));
+  ed.classList.toggle('nowrap', !settings.wrap); $('#wrapBtn').classList.toggle('sel', settings.wrap);
+  $('#sort').value = settings.sort;
+  $('#workspace').className = 'mode-'+settings.mode;
+
+  $$('#modeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.mode===settings.mode));
+  renderPreview(); saveSettings();
+}
+
+/* ===== 이벤트 ===== */
+function closeMenus(){ $$('.dd.open').forEach(d=>d.classList.remove('open')); }
+
+$$('.dd > .ib').forEach(b => b.onclick = e => { e.stopPropagation(); const d=b.parentElement, was=d.classList.contains('open'); closeMenus(); if(!was) d.classList.add('open'); });
+document.addEventListener('click', e => { if(!e.target.closest('.menu')) closeMenus(); });
+
+$('#newBtn').onclick = () => newNote();
+$('#search').oninput = renderList;
+$('#sort').onchange = e => { settings.sort=e.target.value; saveSettings(); renderList(); };
+
+$$('#viewSeg button').forEach(b => b.onclick = () => setView(b.dataset.view));
+$('#list').onclick = e => { const it=e.target.closest('.item'); if(it) openNote(it.dataset.id); };
+$('#title').oninput = e => { const n=cur(); if(n){ n.title=e.target.value; touch(); } };
+$('#title').onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); ed.focus(); } };
+$('#tags').oninput = e => { const n=cur(); if(n){ n.tags=e.target.value.split(',').map(t=>t.trim()).filter(Boolean); touch(); } };
+$('#colors').onclick = e => { const c=e.target.dataset.c, n=cur(); if(c!==undefined && n && !n.deleted){ n.color=c; touch(); renderColors(); renderList(); } };
+
+ed.addEventListener('input', onEdit);
+['keyup','click','select'].forEach(ev => ed.addEventListener(ev, updateStats));
+ed.addEventListener('keydown', e => {
+  if (e.key==='Tab'){ e.preventDefault(); insertText('    '); }
+  if (e.key==='Enter' && !e.shiftKey && !e.isComposing){
+    const s=ed.selectionStart, ls=ed.value.lastIndexOf('\n',s-1)+1, line=ed.value.slice(ls,s);
+    const m=line.match(/^(\s*)([-*] \[[ x]\] |[-*] |(\d+)\. |> )(.*)$/i);
+    if (m){
+      e.preventDefault();
+      if(!m[4].trim()){ ed.setSelectionRange(ls,s); insertText(''); return; }
+      let p=m[2]; if(m[3]) p=(+m[3]+1)+'. '; p=p.replace(/\[x\]/i,'[ ]');
+      insertText('\n'+m[1]+p);
+    }
+  }
+});
+ed.addEventListener('scroll', () => { if(settings.mode==='split'){ const p=$('#preview'); p.scrollTop=(ed.scrollTop/((ed.scrollHeight-ed.clientHeight)||1))*(p.scrollHeight-p.clientHeight); } });
+
+
+$$('[data-md]').forEach(b => b.onclick = () => mdActions[b.dataset.md]());
+$('#dateBtn').onclick = () => insertText(new Date().toLocaleString('ko-KR', {dateStyle:'full', timeStyle:'short'}));
+
+$$('[data-tool]').forEach(b => b.onclick = () => {
+  closeMenus(); if(ed.readOnly || !cur()) return;
+  if(ed.selectionStart===ed.selectionEnd) ed.select();
+  const s=ed.selectionStart, r=textTools[b.dataset.tool](ed.value.slice(s,ed.selectionEnd));
+  insertText(r); ed.setSelectionRange(s, s+r.length); toast(b.textContent+' 완료');
+});
+
+$('#findBtn').onclick = () => toggleFind(!$('#findbar').classList.contains('show'));
+$('#findClose').onclick = () => toggleFind(false);
+$('#findNext').onclick = () => find(1); $('#findPrev').onclick = () => find(-1);
+$('#findInput').onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); find(e.shiftKey?-1:1); } };
+$('#findInput').oninput = () => { const h=findAll(); $('#findInfo').textContent = $('#findInput').value ? (h.length?`${h.length}개`:'없음') : ''; };
+$('#replaceOne').onclick = replaceOne; $('#replaceAll').onclick = replaceAll;
+
+
+$$('#modeSeg button').forEach(b => b.onclick = () => { settings.mode=b.dataset.mode; applySettings(); });
+
+$$('[data-font]').forEach(b => b.onclick = () => { settings.font=b.dataset.font; applySettings(); });
+$('#sizeDown').onclick = () => { settings.size=Math.max(12, settings.size-1); applySettings(); };
+$('#sizeUp').onclick = () => { settings.size=Math.min(32, settings.size+1); applySettings(); };
+$('#wrapBtn').onclick = () => { settings.wrap=!settings.wrap; applySettings(); };
+$('#focusBtn').onclick = () => { document.body.classList.toggle('focus'); if(document.body.classList.contains('focus')) toast('집중 모드 · Esc로 나가기'); };
+$('#menuBtn').onclick = e => { e.stopPropagation(); document.body.classList.toggle('side'); };
+
+$('#speakBtn').onclick = () => {
+  if (speechSynthesis.speaking){ speechSynthesis.cancel(); $('#speakBtn').classList.remove('on'); return; }
+  const text = ed.value.slice(ed.selectionStart, ed.selectionEnd) || ed.value; if(!text.trim()) return;
+  const u = new SpeechSynthesisUtterance(text); u.lang='ko-KR'; u.onend=()=>$('#speakBtn').classList.remove('on');
+  speechSynthesis.speak(u); $('#speakBtn').classList.add('on');
+};
+
+$$('[data-export]').forEach(b => b.onclick = () => {
+  closeMenus(); const n=cur(); if(!n) return; const t=b.dataset.export;
+  if(t==='copy') navigator.clipboard.writeText(n.content).then(()=>toast('클립보드에 복사했습니다'));
+  if(t==='txt') download(safeName()+'.txt', (n.title?n.title+'\n\n':'')+n.content);
+  if(t==='md') download(safeName()+'.md', (n.title?'# '+n.title+'\n\n':'')+n.content, 'text/markdown');
+  if(t==='html') download(safeName()+'.html', `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${esc(n.title)}</title></head><body style="font-family:system-ui,'Malgun Gothic',sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.8;color:#1f2328"><h1>${esc(n.title)}</h1>${md(n.content)}</body></html>`, 'text/html');
+  if(t==='print'){ $('#preview').innerHTML = md(n.content); window.print(); renderPreview(); }
+});
+
+$('#pinBtn').onclick = () => { const n=cur(); if(!n||n.deleted) return; n.pinned=!n.pinned; $('#pinBtn').classList.toggle('on',n.pinned); touch(); renderList(); toast(n.pinned?'고정했습니다':'고정을 해제했습니다'); };
+$('#dupBtn').onclick = () => { const n=cur(); if(!n) return; const c={...n, id:uid(), title:(n.title||'제목 없음')+' 사본', created:Date.now(), updated:Date.now(), tags:[...n.tags], deleted:false, pinned:false}; notes.unshift(c); setView('all'); openNote(c.id); save(); toast('복제했습니다'); };
+$('#delBtn').onclick = () => {
+  const n=cur(); if(!n) return;
+  if(n.deleted){ if(!confirm('이 메모를 영구 삭제할까요? 되돌릴 수 없습니다.')) return; notes=notes.filter(x=>x.id!==n.id); toast('영구 삭제했습니다'); }
+  else { n.deleted=true; n.pinned=false; toast('휴지통으로 이동했습니다'); }
+  save(); openNote(null);
+};
+$('#restoreNoteBtn').onclick = () => { const n=cur(); if(n){ n.deleted=false; save(); setView('all'); openNote(n.id); toast('복원했습니다'); } };
+$('#emptyTrashBtn').onclick = () => { if(confirm('휴지통을 비울까요? 되돌릴 수 없습니다.')){ notes=notes.filter(n=>!n.deleted); save(); openNote(null); } };
+
+$('#backupBtn').onclick = () => { download(`MemoAll_백업_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(notes,null,2), 'application/json'); toast('백업 파일을 저장했습니다'); };
+$('#restoreBtn').onclick = () => { fileMode='backup'; $('#fileInput').click(); };
+$('#openFileBtn').onclick = () => { fileMode='text'; $('#fileInput').click(); };
+$('#fileInput').onchange = e => { handleFile(e.target.files[0], fileMode); e.target.value=''; };
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) handleFile(f, f.name.endsWith('.json')?'backup':'text'); });
+
+document.addEventListener('keydown', e => {
+  const c = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (c && k==='s'){ e.preventDefault(); save(); toast('저장했습니다'); }
+  else if (c && e.shiftKey && k==='f'){ e.preventDefault(); $('#focusBtn').click(); }
+  else if (c && (k==='f' || k==='h')){ e.preventDefault(); toggleFind(true); if(k==='h') $('#replaceInput').focus(); }
+  else if (c && k==='b' && document.activeElement===ed){ e.preventDefault(); mdActions.bold(); }
+  else if (c && k==='i' && document.activeElement===ed){ e.preventDefault(); mdActions.italic(); }
+  else if (c && k==='e'){ e.preventDefault(); settings.mode={edit:'split',split:'preview',preview:'edit'}[settings.mode]; applySettings(); }
+  else if (e.altKey && k==='n'){ e.preventDefault(); newNote(); }
+  else if (e.key==='Escape'){ toggleFind(false); closeMenus(); document.body.classList.remove('focus','side'); }
+});
+window.addEventListener('beforeunload', save);
+
+/* ===== 시작 ===== */
+applySettings();
+if (!notes.length) newNote('MemoAll에 오신 걸 환영합니다.\n\n## 시작하기\n- [x] 입력한 내용은 **자동 저장**됩니다\n- [ ] 오른쪽 위 *분할* 버튼으로 마크다운 미리보기\n- [ ] `Ctrl+F` 로 찾기 · 바꾸기\n\n> 파일을 화면에 끌어다 놓으면 바로 열립니다.', 'MemoAll 시작하기');
+else openNote(cur() && !cur().deleted ? currentId : (notes.find(n=>!n.deleted)?.id || null));
+</script>
+</body>
+</html>
